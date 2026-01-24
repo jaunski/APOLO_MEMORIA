@@ -1,0 +1,48 @@
+import os
+import json
+import datetime
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+
+# Configurações
+FILE_NAME = '00_DNA_MESTRE_INDEX' # Ou o nome exato do arquivo
+SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
+
+def audit_drive():
+    # Autenticação via Secret do GitHub
+    creds_json = json.loads(os.environ['GCP_SA_KEY'])
+    creds = service_account.Credentials.from_service_account_info(creds_json, scopes=SCOPES)
+    service = build('drive', 'v3', credentials=creds)
+
+    # Busca o arquivo
+    results = service.files().list(
+        q=f"name = '{FILE_NAME}' and trashed = false",
+        fields="files(id, name, modifiedTime)").execute()
+    items = results.get('files', [])
+
+    if not items:
+        print(f"❌ ERRO: Arquivo '{FILE_NAME}' não encontrado!")
+        exit(1)
+
+    file = items[0]
+    modified_time_str = file['modifiedTime'].replace('Z', '+00:00')
+    modified_time = datetime.datetime.fromisoformat(modified_time_str)
+    now = datetime.datetime.now(datetime.timezone.utc)
+    
+    # Tolerância: Se não foi mexido nos últimos 20 min, é FALHA.
+    diff = now - modified_time
+    minutes_diff = diff.total_seconds() / 60
+
+    print(f"🔍 Auditoria do Arquivo: {file['name']}")
+    print(f"🕒 Última modificação: {minutes_diff:.1f} minutos atrás.")
+
+    if minutes_diff > 20:
+        print("🚨 FALHA CRÍTICA: O Apolo disse que salvou, mas o arquivo é velho!")
+        # Aqui você pode integrar com a criação de uma Issue no GitHub avisando da mentira
+        exit(1) # Quebra o workflow propositalmente
+    else:
+        print("✅ SUCESSO: Memória consolidada recentemente. O Apolo falou a verdade.")
+        exit(0)
+
+if __name__ == '__main__':
+    audit_drive()
