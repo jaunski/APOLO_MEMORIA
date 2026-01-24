@@ -1,24 +1,35 @@
-name: 💓 Apolo Heartbeat
+name: 🧠 Apolo Drive Trigger
 on:
   schedule:
-    - cron: '*/5 * * * *' # Roda a cada 5 minutos
+    - cron: '*/5 * * * *' # Roda a cada 5 min (Público = Grátis e Ilimitado)
   workflow_dispatch:
 
 permissions:
-  contents: write
+  issues: write
 
 jobs:
-  pulso-silencioso:
+  gatilho-memoria:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - name: O Chamado do Sócio
+        uses: actions/github-script@v6
+        with:
+          script: |
+            // Verifica se já existe um lembrete aberto
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['apolo-drive-sync']
+            });
 
-      - name: Atualiza o Relógio
-        run: |
-          date > heartbeat.txt
-          git config user.name "Apolo Bot"
-          git config user.email "apolo@bot.com"
-          git add heartbeat.txt
-          git commit -m "💓 Pulso do Apolo: 5 min" || echo "Nada a atualizar"
-          git push
+            // Se não tiver, cria o Alerta de Sincronização
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '📂 APOLO: HORA DE SINCRONIZAR O DRIVE',
+                body: 'Sócio, o ciclo fechou. Pergunte ao Apolo: "Podemos atualizar o arquivo @00_DNA_MESTRE_INDEX no Drive com as últimas decisões?". Não deixe a memória morrer.',
+                labels: ['apolo-drive-sync']
+              });
+            }
