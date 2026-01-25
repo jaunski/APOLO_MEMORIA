@@ -1,4 +1,4 @@
-name: 🕵️‍♂️ Auditor de Memória (Anti-Alucinação)
+name: 🕵️‍♂️ Auditor de Memória (Blindado)
 
 on:
   schedule:
@@ -6,78 +6,79 @@ on:
   workflow_dispatch:
 
 jobs:
-  auditoria-drive:
+  auditoria:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout do Repositório
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Configurar Python
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      - name: Instalar Libs do Google
+      - name: Instalar Dependências
         run: pip install google-api-python-client google-auth
 
-      - name: Rodar Auditoria (Script Python Embutido)
-        env:
-          # ATENÇÃO: Você precisa ter criado esse Secret no GitHub!
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }} 
+      - name: Criar Script de Auditoria
         run: |
-          python -c "
+          cat <<EOF > audit_script.py
           import os
           import json
           import datetime
           from google.oauth2 import service_account
           from googleapiclient.discovery import build
 
-          # CONFIGURAÇÃO
-          FILE_NAME = '00_DNA_MESTRE_INDEX' 
-          SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
-
           def audit():
-              try:
-                  if not os.environ.get('GCP_SA_KEY'):
-                      print('❌ ERRO: Secret GCP_SA_KEY não encontrada!')
-                      exit(1)
+              # 1. Tenta pegar a chave do ambiente
+              key_content = os.environ.get('GCP_SA_KEY')
+              if not key_content:
+                  print("❌ ERRO CRÍTICO: O GitHub não entregou a chave (Secret GCP_SA_KEY vazia).")
+                  print("👉 Ação: Vá em Settings > Secrets > Actions e adicione 'GCP_SA_KEY' novamente.")
+                  exit(1)
 
-                  creds_info = json.loads(os.environ['GCP_SA_KEY'])
-                  creds = service_account.Credentials.from_service_account_info(creds_info, scopes=SCOPES)
+              try:
+                  creds_info = json.loads(key_content)
+                  creds = service_account.Credentials.from_service_account_info(creds_info)
                   service = build('drive', 'v3', credentials=creds)
 
-                  # Busca o arquivo exato
+                  # 2. Busca o Arquivo Mestre
+                  FILE_NAME = '00_DNA_MESTRE_INDEX'
                   results = service.files().list(
-                      q=\"name = '\" + FILE_NAME + \"' and trashed = false\",
-                      fields=\"files(id, name, modifiedTime)\"
+                      q="name = '" + FILE_NAME + "' and trashed = false",
+                      fields="files(id, name, modifiedTime)"
                   ).execute()
                   items = results.get('files', [])
 
                   if not items:
-                      print(f'❌ CRÍTICO: O arquivo {FILE_NAME} SUMIU ou o Apolo não tem acesso!')
+                      print(f"❌ ERRO: O arquivo '{FILE_NAME}' não foi encontrado no Drive!")
                       exit(1)
 
+                  # 3. Verifica a Hora
                   file = items[0]
-                  # Converte datas
                   mod_time = datetime.datetime.fromisoformat(file['modifiedTime'].replace('Z', '+00:00'))
                   now = datetime.datetime.now(datetime.timezone.utc)
-                  
-                  # Calcula diferença em minutos
                   diff_minutes = (now - mod_time).total_seconds() / 60
 
-                  print(f'🔍 ARQUIVO: {file[\"name\"]}')
-                  print(f'🕒 ÚLTIMA MODIFICAÇÃO: {diff_minutes:.1f} minutos atrás')
+                  print(f"🔍 Arquivo: {file['name']}")
+                  print(f"🕒 Modificado há: {diff_minutes:.1f} minutos")
 
                   if diff_minutes > 30:
-                      print('🚨 ALERTA DE ALUCINAÇÃO: O Apolo disse que salvou, mas faz mais de 30min que o arquivo não é tocado!')
-                      exit(1) # Falha o workflow para gerar alerta vermelho
+                      print("🚨 ALERTA: Apolo não salva a memória há mais de 30 minutos!")
+                      exit(1) # Falha para avisar
                   else:
-                      print('✅ MEMÓRIA FRESCA: Atualização confirmada recentemente.')
+                      print("✅ SUCESSO: Memória está fresca e atualizada.")
                       exit(0)
 
               except Exception as e:
-                  print(f'❌ ERRO DE EXECUÇÃO: {str(e)}')
+                  print(f"❌ ERRO TÉCNICO: {str(e)}")
                   exit(1)
 
-          audit()
-          "
+          if __name__ == '__main__':
+              audit()
+          EOF
+
+      - name: Executar Auditoria
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        run: python audit_script.py
