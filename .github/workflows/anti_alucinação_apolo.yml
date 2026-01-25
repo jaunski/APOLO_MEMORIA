@@ -1,48 +1,83 @@
-import os
-import json
-import datetime
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
+name: 🕵️‍♂️ Auditor de Memória (Anti-Alucinação)
 
-# Configurações
-FILE_NAME = '00_DNA_MESTRE_INDEX' # Ou o nome exato do arquivo
-SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
+on:
+  schedule:
+    - cron: '*/20 * * * *' # Roda a cada 20 min
+  workflow_dispatch:
 
-def audit_drive():
-    # Autenticação via Secret do GitHub
-    creds_json = json.loads(os.environ['GCP_SA_KEY'])
-    creds = service_account.Credentials.from_service_account_info(creds_json, scopes=SCOPES)
-    service = build('drive', 'v3', credentials=creds)
+jobs:
+  auditoria-drive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do Repositório
+        uses: actions/checkout@v3
 
-    # Busca o arquivo
-    results = service.files().list(
-        q=f"name = '{FILE_NAME}' and trashed = false",
-        fields="files(id, name, modifiedTime)").execute()
-    items = results.get('files', [])
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
 
-    if not items:
-        print(f"❌ ERRO: Arquivo '{FILE_NAME}' não encontrado!")
-        exit(1)
+      - name: Instalar Libs do Google
+        run: pip install google-api-python-client google-auth
 
-    file = items[0]
-    modified_time_str = file['modifiedTime'].replace('Z', '+00:00')
-    modified_time = datetime.datetime.fromisoformat(modified_time_str)
-    now = datetime.datetime.now(datetime.timezone.utc)
-    
-    # Tolerância: Se não foi mexido nos últimos 20 min, é FALHA.
-    diff = now - modified_time
-    minutes_diff = diff.total_seconds() / 60
+      - name: Rodar Auditoria (Script Python Embutido)
+        env:
+          # ATENÇÃO: Você precisa ter criado esse Secret no GitHub!
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }} 
+        run: |
+          python -c "
+          import os
+          import json
+          import datetime
+          from google.oauth2 import service_account
+          from googleapiclient.discovery import build
 
-    print(f"🔍 Auditoria do Arquivo: {file['name']}")
-    print(f"🕒 Última modificação: {minutes_diff:.1f} minutos atrás.")
+          # CONFIGURAÇÃO
+          FILE_NAME = '00_DNA_MESTRE_INDEX' 
+          SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
 
-    if minutes_diff > 20:
-        print("🚨 FALHA CRÍTICA: O Apolo disse que salvou, mas o arquivo é velho!")
-        # Aqui você pode integrar com a criação de uma Issue no GitHub avisando da mentira
-        exit(1) # Quebra o workflow propositalmente
-    else:
-        print("✅ SUCESSO: Memória consolidada recentemente. O Apolo falou a verdade.")
-        exit(0)
+          def audit():
+              try:
+                  if not os.environ.get('GCP_SA_KEY'):
+                      print('❌ ERRO: Secret GCP_SA_KEY não encontrada!')
+                      exit(1)
 
-if __name__ == '__main__':
-    audit_drive()
+                  creds_info = json.loads(os.environ['GCP_SA_KEY'])
+                  creds = service_account.Credentials.from_service_account_info(creds_info, scopes=SCOPES)
+                  service = build('drive', 'v3', credentials=creds)
+
+                  # Busca o arquivo exato
+                  results = service.files().list(
+                      q=\"name = '\" + FILE_NAME + \"' and trashed = false\",
+                      fields=\"files(id, name, modifiedTime)\"
+                  ).execute()
+                  items = results.get('files', [])
+
+                  if not items:
+                      print(f'❌ CRÍTICO: O arquivo {FILE_NAME} SUMIU ou o Apolo não tem acesso!')
+                      exit(1)
+
+                  file = items[0]
+                  # Converte datas
+                  mod_time = datetime.datetime.fromisoformat(file['modifiedTime'].replace('Z', '+00:00'))
+                  now = datetime.datetime.now(datetime.timezone.utc)
+                  
+                  # Calcula diferença em minutos
+                  diff_minutes = (now - mod_time).total_seconds() / 60
+
+                  print(f'🔍 ARQUIVO: {file[\"name\"]}')
+                  print(f'🕒 ÚLTIMA MODIFICAÇÃO: {diff_minutes:.1f} minutos atrás')
+
+                  if diff_minutes > 30:
+                      print('🚨 ALERTA DE ALUCINAÇÃO: O Apolo disse que salvou, mas faz mais de 30min que o arquivo não é tocado!')
+                      exit(1) # Falha o workflow para gerar alerta vermelho
+                  else:
+                      print('✅ MEMÓRIA FRESCA: Atualização confirmada recentemente.')
+                      exit(0)
+
+              except Exception as e:
+                  print(f'❌ ERRO DE EXECUÇÃO: {str(e)}')
+                  exit(1)
+
+          audit()
+          "
