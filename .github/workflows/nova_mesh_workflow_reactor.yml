@@ -1,0 +1,109 @@
+name: Nova Mesh Workflow Reactor
+
+on:
+  workflow_run:
+    workflows:
+      - Nova Mesh Netlify Package Check
+      - Nova Mesh Netlify Deploy
+    types:
+      - completed
+
+permissions:
+  contents: write
+  issues: write
+  actions: read
+
+jobs:
+  react:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build reaction payload
+        run: |
+          mkdir -p nova_mesh/channel nova_mesh/data
+          RESULT='${{ github.event.workflow_run.conclusion }}'
+          WORKFLOW='${{ github.event.workflow_run.name }}'
+          URL='${{ github.event.workflow_run.html_url }}'
+          RUN_ID='${{ github.event.workflow_run.id }}'
+          TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          SAFE_TS=$(date -u +"%Y%m%d_%H%M%S")
+
+          cat > "nova_mesh/channel/${SAFE_TS}_workflow_reactor.md" <<EOF
+          # Workflow Reactor Event
+
+          ## Timestamp
+
+          ${TS}
+
+          ## Workflow
+
+          ${WORKFLOW}
+
+          ## Result
+
+          ${RESULT}
+
+          ## Run
+
+          ${URL}
+
+          ## Reaction
+
+          If result is success, continue toward deploy/test/connectors.
+          If result is failure, classify failure and create follow-up issue/dead-letter.
+          EOF
+
+          cat > reactor_event.json <<EOF
+          {
+            "timestamp": "${TS}",
+            "source": "github.workflow_run",
+            "event_type": "workflow_completed",
+            "payload": {
+              "workflow": "${WORKFLOW}",
+              "result": "${RESULT}",
+              "run_id": "${RUN_ID}",
+              "url": "${URL}"
+            },
+            "status": "${RESULT}",
+            "priority": 2,
+            "summary_for_ai": "GitHub workflow ${WORKFLOW} completed with result ${RESULT}.",
+            "next_action": "React according to success/failure and continue Nova Mesh chain.",
+            "correlation_id": "nova_mesh_workflow_reactor"
+          }
+          EOF
+
+      - name: Append event to mesh_events.json
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = 'nova_mesh/data/mesh_events.json';
+          const event = JSON.parse(fs.readFileSync('reactor_event.json', 'utf8'));
+          let events = [];
+          try { events = JSON.parse(fs.readFileSync(path, 'utf8')); } catch (_) {}
+          events.push({ event_id: `evt_workflow_${Date.now()}`, ...event });
+          fs.writeFileSync(path, JSON.stringify(events.slice(-500), null, 2) + '\n');
+          NODE
+
+      - name: Create issue on failure
+        if: ${{ github.event.workflow_run.conclusion != 'success' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const workflow = context.payload.workflow_run.name;
+            const url = context.payload.workflow_run.html_url;
+            const conclusion = context.payload.workflow_run.conclusion;
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[Nova Mesh Dead Letter] Workflow failed: ${workflow}`,
+              body: `Workflow **${workflow}** completed with result **${conclusion}**.\n\nRun: ${url}\n\nNext: classify the failure, preserve the objective, and route through fallback.`,
+              labels: ['nova-mesh', 'dead-letter', 'automation']
+            });
+
+      - name: Commit reaction files
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'Nova Mesh workflow reactor event'
+          file_pattern: 'nova_mesh/channel/*_workflow_reactor.md nova_mesh/data/mesh_events.json'
