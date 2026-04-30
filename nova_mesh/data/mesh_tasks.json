@@ -20,5 +20,17 @@
     "result": null,
     "next_step": "Escolher substrato executavel disponivel e criar POST ingest.",
     "priority": 1
+  },
+  {
+    "task_id": "task_autopilot_build",
+    "created_at": "2026-04-30T20:32:11.865Z",
+    "objective": "Advance Netlify Ingest deploy/test chain.",
+    "status": "queued",
+    "assigned_node": "autopilot.daemon",
+    "input_ref": "nova_mesh/data",
+    "result": null,
+    "next_step": "Open deploy/ingest task: task_ingest_endpoint_20260430",
+    "priority": 1,
+    "updated_at": "2026-04-30T20:32:11.865Z"
   }
 ]

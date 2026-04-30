@@ -1,6 +1,6 @@
 {
   "mesh_name": "Nova Mesh Core",
-  "status": "github_bridge_db_initialized",
+  "status": "autopilot_cycle_completed",
   "operating_mode": "GitHub JSON Bridge DB fallback",
   "keyword": "PERSISTIR",
   "core_question": "da para ir alem?",
@@ -14,5 +14,9 @@
     "Create mesh_dead_letters.json",
     "Create mesh_snapshots.json",
     "Connect Make/Zapier later through an executable ingest endpoint"
-  ]
+  ],
+  "last_autopilot_cycle": "2026-04-30T20:32:11.865Z",
+  "autopilot_mode": "build",
+  "autopilot_next_action": "Advance Netlify Ingest deploy/test chain.",
+  "autopilot_reason": "Open deploy/ingest task: task_ingest_endpoint_20260430"
 }
