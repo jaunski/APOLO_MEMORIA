@@ -1,0 +1,45 @@
+name: Nova Mesh Netlify Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nova_mesh/implementations/netlify_ingest_package
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Verify required secrets
+        run: |
+          if [ -z "${{ secrets.NETLIFY_AUTH_TOKEN }}" ]; then
+            echo "Missing NETLIFY_AUTH_TOKEN secret"
+            exit 1
+          fi
+          if [ -z "${{ secrets.NETLIFY_SITE_ID }}" ]; then
+            echo "Missing NETLIFY_SITE_ID secret"
+            exit 1
+          fi
+
+      - name: Deploy to Netlify
+        run: |
+          npx netlify deploy \
+            --prod \
+            --site "${{ secrets.NETLIFY_SITE_ID }}" \
+            --auth "${{ secrets.NETLIFY_AUTH_TOKEN }}"
+
+      - name: Deployment note
+        run: |
+          echo "Deploy attempted for Nova Mesh Netlify package."
+          echo "After success, test: /.netlify/functions/state and /.netlify/functions/ingest"
