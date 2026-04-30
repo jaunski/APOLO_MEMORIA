@@ -1,4 +1,4 @@
-import { getStore } from '@netlify/blobs';
+import { getStore, getDeployStore } from '@netlify/blobs';
 
 const EVENTS_KEY = 'mesh_events';
 const STATE_KEY = 'mesh_state';
@@ -7,7 +7,7 @@ const DEAD_LETTERS_KEY = 'mesh_dead_letters';
 export async function persistEventToBlobs(normalizedEvent) {
   try {
     const storeName = process.env.NOVA_MESH_BLOB_STORE || 'nova-mesh-bridge-db';
-    const store = getStore(storeName);
+    const store = getBridgeStore(storeName);
 
     const maxEvents = Number(process.env.NOVA_MESH_MAX_EVENTS || 500);
     const maxDeadLetters = Number(process.env.NOVA_MESH_MAX_DEAD_LETTERS || 200);
@@ -22,6 +22,7 @@ export async function persistEventToBlobs(normalizedEvent) {
       mesh_name: state.mesh_name || 'Nova Mesh Core',
       status: 'event_ingested',
       operating_mode: 'Netlify Blobs Bridge DB',
+      storage_scope: getStorageScope(),
       last_heartbeat: new Date().toISOString(),
       last_event_id: normalizedEvent.event_id,
       last_event_source: normalizedEvent.source,
@@ -50,6 +51,7 @@ export async function persistEventToBlobs(normalizedEvent) {
       ok: true,
       provider: 'netlify_blobs',
       store: storeName,
+      storage_scope: getStorageScope(),
       keys: {
         events: EVENTS_KEY,
         state: STATE_KEY,
@@ -68,7 +70,7 @@ export async function persistEventToBlobs(normalizedEvent) {
 
 export async function getBridgeStateFromBlobs() {
   const storeName = process.env.NOVA_MESH_BLOB_STORE || 'nova-mesh-bridge-db';
-  const store = getStore(storeName);
+  const store = getBridgeStore(storeName);
   const state = await getJsonObject(store, STATE_KEY);
   const events = await getJsonArray(store, EVENTS_KEY);
   const deadLetters = await getJsonArray(store, DEAD_LETTERS_KEY);
@@ -76,6 +78,7 @@ export async function getBridgeStateFromBlobs() {
     ok: true,
     provider: 'netlify_blobs',
     store: storeName,
+    storage_scope: getStorageScope(),
     state,
     counts: {
       events: events.length,
@@ -84,6 +87,27 @@ export async function getBridgeStateFromBlobs() {
     recent_events: events.slice(-5),
     recent_dead_letters: deadLetters.slice(-5)
   };
+}
+
+function getBridgeStore(storeName) {
+  const scope = getStorageScope();
+
+  if (scope === 'deploy') {
+    return getDeployStore(storeName);
+  }
+
+  // Strong consistency matters for mesh state reads after writes.
+  // Global scope should be used for production/live mesh state only.
+  return getStore(storeName, { consistency: 'strong' });
+}
+
+function getStorageScope() {
+  if (process.env.NOVA_MESH_BLOB_SCOPE) {
+    return process.env.NOVA_MESH_BLOB_SCOPE;
+  }
+
+  const netlifyContext = process.env.CONTEXT || process.env.NETLIFY_CONTEXT;
+  return netlifyContext === 'production' ? 'global' : 'deploy';
 }
 
 async function getJsonArray(store, key) {
