@@ -1,0 +1,82 @@
+[
+  {
+    "capability_id": "github.memory",
+    "provider": "GitHub",
+    "capability": "versioned_external_memory_and_state_files",
+    "status": "active",
+    "health_score": 0.85,
+    "fallbacks": ["google.drive", "notion.database", "local_artifact_zip"],
+    "risk_level": "medium",
+    "notes": "Current durable foundation for Nova Mesh files and minimal JSON Bridge DB."
+  },
+  {
+    "capability_id": "make.webhook",
+    "provider": "Make",
+    "capability": "receive_webhook_and_run_scenario",
+    "status": "planned",
+    "health_score": 0.50,
+    "fallbacks": ["zapier.webhook", "netlify.ingest", "yepcode.ingest"],
+    "risk_level": "medium",
+    "notes": "Primary visual workflow orchestrator once webhook is configured."
+  },
+  {
+    "capability_id": "zapier.webhook",
+    "provider": "Zapier",
+    "capability": "catch_hook_and_execute_app_actions",
+    "status": "planned",
+    "health_score": 0.50,
+    "fallbacks": ["make.webhook", "gmail.event_bus"],
+    "risk_level": "medium",
+    "notes": "Broad connector and long-tail action layer."
+  },
+  {
+    "capability_id": "netlify.ingest",
+    "provider": "Netlify",
+    "capability": "public_endpoint_and_scheduled_heartbeat",
+    "status": "project_created",
+    "health_score": 0.60,
+    "fallbacks": ["github.actions", "yepcode.function"],
+    "risk_level": "medium",
+    "notes": "Project nova-bridge-router exists; function deployment still needed."
+  },
+  {
+    "capability_id": "yepcode.function",
+    "provider": "YepCode",
+    "capability": "custom_execution_and_datastore",
+    "status": "auth_required_or_unavailable",
+    "health_score": 0.30,
+    "fallbacks": ["netlify.ingest", "github.memory"],
+    "risk_level": "medium",
+    "notes": "Attempted as Bridge DB but connector required reauthentication."
+  },
+  {
+    "capability_id": "botpress.conversation",
+    "provider": "Botpress",
+    "capability": "conversational_gateway",
+    "status": "available_when_connected",
+    "health_score": 0.60,
+    "fallbacks": ["adalo.cockpit", "gmail.event_bus"],
+    "risk_level": "medium",
+    "notes": "Conversational external interface, not the sole brain."
+  },
+  {
+    "capability_id": "adalo.cockpit",
+    "provider": "Adalo",
+    "capability": "mobile_web_human_control_panel",
+    "status": "build_started",
+    "health_score": 0.55,
+    "fallbacks": ["notion.dashboard", "google.sheets"],
+    "risk_level": "low",
+    "notes": "Nova Bridge Hub build was started."
+  },
+  {
+    "capability_id": "gmail.event_bus",
+    "provider": "Gmail",
+    "capability": "human_readable_fallback_event_bus",
+    "status": "available",
+    "health_score": 0.80,
+    "fallbacks": ["calendar.scheduler", "drive.snapshot"],
+    "risk_level": "low",
+    "notes": "Labels and threads can serve as fallback queues."
+  }
+]
