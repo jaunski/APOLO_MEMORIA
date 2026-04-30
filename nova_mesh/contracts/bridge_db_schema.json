@@ -1,0 +1,91 @@
+{
+  "name": "Nova Mesh Bridge DB Schema",
+  "version": "0.1.0",
+  "purpose": "Portable schema for any persistent state layer used by Nova Mesh Core.",
+  "tables": {
+    "mesh_events": {
+      "description": "Every external or internal event entering the mesh.",
+      "primary_key": "event_id",
+      "fields": {
+        "event_id": "string",
+        "timestamp": "iso_datetime",
+        "source": "string",
+        "event_type": "string",
+        "payload": "json_object",
+        "status": "new|queued|running|done|failed|blocked",
+        "priority": "integer_1_to_5",
+        "summary_for_ai": "string",
+        "next_action": "string",
+        "route_hint": "string",
+        "correlation_id": "string"
+      }
+    },
+    "mesh_tasks": {
+      "description": "Actionable units created from events, plans, failures or human commands.",
+      "primary_key": "task_id",
+      "fields": {
+        "task_id": "string",
+        "created_at": "iso_datetime",
+        "objective": "string",
+        "status": "queued|running|done|failed|blocked",
+        "assigned_node": "string",
+        "input_ref": "string",
+        "result": "json_object_or_null",
+        "next_step": "string",
+        "priority": "integer_1_to_5"
+      }
+    },
+    "mesh_state": {
+      "description": "Current operational state, heartbeats and global flags.",
+      "primary_key": "key",
+      "fields": {
+        "key": "string",
+        "value": "json_or_string",
+        "updated_at": "iso_datetime",
+        "source": "string",
+        "confidence": "number_0_to_1"
+      }
+    },
+    "mesh_capabilities": {
+      "description": "Registry of app capabilities, providers, routing hints and fallbacks.",
+      "primary_key": "capability_id",
+      "fields": {
+        "capability_id": "string",
+        "provider": "string",
+        "capability": "string",
+        "status": "active|planned|degraded|blocked|retired",
+        "health_score": "number_0_to_1",
+        "fallbacks": "array_of_capability_ids",
+        "risk_level": "low|medium|high",
+        "notes": "string"
+      }
+    },
+    "mesh_dead_letters": {
+      "description": "Failed, blocked or malformed events preserved for retry and diagnosis.",
+      "primary_key": "dead_id",
+      "fields": {
+        "dead_id": "string",
+        "timestamp": "iso_datetime",
+        "source": "string",
+        "error": "string",
+        "payload": "json_object",
+        "retry_count": "integer",
+        "next_retry": "iso_datetime_or_null",
+        "status": "queued|retrying|resolved|abandoned"
+      }
+    },
+    "mesh_snapshots": {
+      "description": "Compressed AI-readable summaries of mesh state over time.",
+      "primary_key": "snapshot_id",
+      "fields": {
+        "snapshot_id": "string",
+        "timestamp": "iso_datetime",
+        "summary": "string",
+        "open_tasks": "integer",
+        "failed_events": "integer",
+        "degraded_capabilities": "array_of_strings",
+        "next_recommended_action": "string"
+      }
+    }
+  }
+}
