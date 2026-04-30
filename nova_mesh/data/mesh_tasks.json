@@ -1,0 +1,24 @@
+[
+  {
+    "task_id": "task_bridge_db_minimal_20260430",
+    "created_at": "2026-04-30T00:00:00-03:00",
+    "objective": "Criar Banco Ponte minimo em GitHub JSON para continuidade entre chats e base de estado da Nova Mesh.",
+    "status": "running",
+    "assigned_node": "github.memory",
+    "input_ref": "evt_boot_pointer_confirmed_20260430",
+    "result": null,
+    "next_step": "Criar mesh_capabilities, mesh_dead_letters e mesh_snapshots.",
+    "priority": 1
+  },
+  {
+    "task_id": "task_ingest_endpoint_20260430",
+    "created_at": "2026-04-30T00:00:00-03:00",
+    "objective": "Implementar rota de ingestao externa para Make e Zapier gravarem eventos no Banco Ponte.",
+    "status": "queued",
+    "assigned_node": "netlify_or_yepcode_or_make",
+    "input_ref": "nova_mesh/contracts/event_contract.json",
+    "result": null,
+    "next_step": "Escolher substrato executavel disponivel e criar POST ingest.",
+    "priority": 1
+  }
+]
