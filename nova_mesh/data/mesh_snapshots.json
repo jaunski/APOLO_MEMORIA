@@ -1,0 +1,11 @@
+[
+  {
+    "snapshot_id": "snap_github_bridge_db_initialized_20260430",
+    "timestamp": "2026-04-30T00:00:00-03:00",
+    "summary": "Nova Mesh possui agora um Banco Ponte minimo em GitHub JSON com state, events, tasks, capabilities, dead_letters e snapshots. O objetivo e preservar continuidade entre chats e preparar ingestao externa para Make/Zapier.",
+    "open_tasks": 2,
+    "failed_events": 0,
+    "degraded_capabilities": ["yepcode.function"],
+    "next_recommended_action": "Criar um endpoint ou rotina executavel de ingestao para que Make e Zapier possam gravar eventos seguindo event_contract.json."
+  }
+]
