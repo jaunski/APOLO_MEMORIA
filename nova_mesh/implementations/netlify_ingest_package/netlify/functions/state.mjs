@@ -1,3 +1,4 @@
+import { requireNovaMeshAuth } from './lib/auth.mjs';
 import { getBridgeStateFromBlobs } from './lib/blob-storage.mjs';
 
 export async function handler(event) {
@@ -6,11 +7,13 @@ export async function handler(event) {
       return json(405, { ok: false, error: 'method_not_allowed' });
     }
 
-    const expectedToken = process.env.NOVA_MESH_TOKEN;
-    const receivedToken = event.headers['x-nova-mesh-token'] || event.headers['X-Nova-Mesh-Token'];
-
-    if (expectedToken && receivedToken !== expectedToken) {
-      return json(401, { ok: false, error: 'unauthorized' });
+    const auth = requireNovaMeshAuth(event);
+    if (!auth.ok) {
+      return json(auth.statusCode, {
+        ok: false,
+        error: auth.error,
+        message: auth.message
+      });
     }
 
     const bridgeState = await getBridgeStateFromBlobs();
