@@ -1,3 +1,5 @@
+import { persistEventToGitHub } from './lib/github-storage.mjs';
+
 export async function handler(event) {
   try {
     if (event.httpMethod !== 'POST') {
@@ -39,14 +41,17 @@ export async function handler(event) {
       correlation_id: input.correlation_id || null
     };
 
-    // MVP behavior: return normalized event.
-    // Next versions should write to Bridge DB: GitHub JSON, Netlify Blobs, Supabase, Sheets, Notion or YepCode.
+    const storageResult = await persistEventToGitHub(normalizedEvent);
+
     return json(200, {
       ok: true,
       message: 'Nova Mesh event accepted',
       event: normalizedEvent,
-      bridge_write: 'not_configured_yet',
-      next_step: 'Connect storage adapter to persist normalizedEvent into mesh_events.'
+      bridge_write: storageResult.ok ? 'github_json_bridge_written' : 'github_json_bridge_skipped_or_failed',
+      storage: storageResult,
+      next_step: storageResult.ok
+        ? 'Connect Make/Zapier to this endpoint and monitor mesh_events.'
+        : 'Set NOVA_MESH_GITHUB_TOKEN or check GitHub storage adapter result.'
     });
   } catch (error) {
     return json(500, { ok: false, error: 'ingest_failed', details: error.message });
