@@ -1,0 +1,21 @@
+{
+  "version": "0.1.0",
+  "capabilities": [
+    {
+      "id": "make.webhook",
+      "provider": "Make",
+      "capability": "receive_webhook_and_run_scenario",
+      "status": "planned",
+      "fallbacks": ["zapier.webhook", "netlify.ingest"],
+      "notes": "Primary visual workflow orchestrator."
+    },
+    {
+      "id": "zapier.webhook",
+      "provider": "Zapier",
+      "capability": "catch_hook_and_execute_app_actions",
+      "status": "planned",
+      "fallbacks": ["make.webhook", "gmail.event_bus"],
+      "notes": "Broad app action layer and fallback connector."
+    }
+  ]
+}
