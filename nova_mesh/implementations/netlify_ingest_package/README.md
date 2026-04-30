@@ -8,7 +8,8 @@ It provides:
 
 - HTTP Universal Ingest endpoint;
 - Scheduled Heartbeat function;
-- Retry Background Worker stub.
+- Retry Background Worker stub;
+- GitHub JSON Bridge DB storage adapter.
 
 ## Files
 
@@ -16,22 +17,36 @@ It provides:
 - `netlify/functions/ingest.mjs`
 - `netlify/functions/heartbeat.mjs`
 - `netlify/functions/retry-background.mjs`
+- `netlify/functions/lib/github-storage.mjs`
 
 ## Environment variables
 
-Set:
+Set in Netlify:
 
-`NOVA_MESH_TOKEN`
+```text
+NOVA_MESH_TOKEN=your_ingest_shared_secret
+NOVA_MESH_GITHUB_TOKEN=github_pat_or_fine_grained_token_with_repo_contents_write
+NOVA_MESH_GITHUB_REPO=jaunski/APOLO_MEMORIA
+NOVA_MESH_GITHUB_BRANCH=main
+NOVA_MESH_MAX_EVENTS=500
+NOVA_MESH_MAX_DEAD_LETTERS=200
+```
 
 Requests to `ingest.mjs` should include header:
 
-`x-nova-mesh-token: YOUR_TOKEN`
+```text
+x-nova-mesh-token: YOUR_TOKEN
+```
+
+Never commit real tokens to GitHub.
 
 ## Test payload
 
 POST to:
 
-`/.netlify/functions/ingest`
+```text
+/.netlify/functions/ingest
+```
 
 ```json
 {
@@ -47,28 +62,24 @@ POST to:
 }
 ```
 
-Expected result:
+Expected result when GitHub token is configured:
 
 - HTTP 200;
 - normalized event;
-- `bridge_write: not_configured_yet`.
+- `bridge_write: github_json_bridge_written`;
+- event appended to `nova_mesh/data/mesh_events.json`;
+- `nova_mesh/data/mesh_state.json` updated.
 
-## Current limitation
+Expected result without GitHub token:
 
-This package currently normalizes and returns events, but does not persist them yet.
-
-Next adapter targets:
-
-1. GitHub JSON Bridge DB;
-2. Netlify Blobs;
-3. Supabase;
-4. Google Sheets;
-5. Notion Database;
-6. YepCode Datastore.
+- HTTP 200;
+- normalized event;
+- `bridge_write: github_json_bridge_skipped_or_failed`;
+- storage reason: `missing_github_token`.
 
 ## Make/Zapier route
 
-Make or Zapier can call the ingest endpoint by HTTP/Webhook module:
+Make or Zapier can call the ingest endpoint by HTTP/Webhook module.
 
 Headers:
 
@@ -79,6 +90,29 @@ x-nova-mesh-token: ${NOVA_MESH_TOKEN}
 
 Body: use `nova_mesh/contracts/event_contract.json`.
 
+## Dead letters
+
+If the event type/status indicates failure or blocked state, the GitHub storage adapter also appends a record to:
+
+```text
+nova_mesh/data/mesh_dead_letters.json
+```
+
+## Current limitation
+
+GitHub JSON is durable but not ideal for high-frequency event writes because every write creates commits and can conflict under concurrency.
+
+Use it as bootstrap/fallback.
+
+Future storage upgrades:
+
+1. Netlify Blobs;
+2. Supabase;
+3. Google Sheets;
+4. Notion Database;
+5. YepCode Datastore;
+6. Airtable.
+
 ## Next step
 
-Add a storage adapter so accepted events are appended to `mesh_events` and `mesh_state` is updated.
+Deploy this package to the existing Netlify project `nova-bridge-router`, set environment variables, then send a test event from Make or Zapier.
