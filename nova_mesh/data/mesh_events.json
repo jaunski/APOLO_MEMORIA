@@ -1,0 +1,18 @@
+[
+  {
+    "event_id": "evt_boot_pointer_confirmed_20260430",
+    "timestamp": "2026-04-30T00:00:00-03:00",
+    "source": "chatgpt.current_session",
+    "event_type": "boot_pointer_confirmed",
+    "payload": {
+      "boot_pointer": "nova_mesh/BOOT_POINTER.md",
+      "shared_context_path": "jaunski/APOLO_MEMORIA/nova_mesh/"
+    },
+    "status": "done",
+    "priority": 1,
+    "summary_for_ai": "O ponteiro de boot da Nova Mesh foi criado e confirmado como caminho de continuidade entre chats.",
+    "next_action": "Criar Banco Ponte minimo em GitHub JSON e continuar preparando ingestao externa.",
+    "route_hint": "github.memory",
+    "correlation_id": "nova_mesh_bootstrap"
+  }
+]
