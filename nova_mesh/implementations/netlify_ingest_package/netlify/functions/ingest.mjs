@@ -1,3 +1,4 @@
+import { persistEventToBlobs } from './lib/blob-storage.mjs';
 import { persistEventToGitHub } from './lib/github-storage.mjs';
 
 export async function handler(event) {
@@ -41,21 +42,57 @@ export async function handler(event) {
       correlation_id: input.correlation_id || null
     };
 
-    const storageResult = await persistEventToGitHub(normalizedEvent);
+    const storageResult = await persistWithFallback(normalizedEvent);
 
     return json(200, {
       ok: true,
       message: 'Nova Mesh event accepted',
       event: normalizedEvent,
-      bridge_write: storageResult.ok ? 'github_json_bridge_written' : 'github_json_bridge_skipped_or_failed',
+      bridge_write: storageResult.ok ? storageResult.bridge_write : 'bridge_write_failed',
       storage: storageResult,
       next_step: storageResult.ok
-        ? 'Connect Make/Zapier to this endpoint and monitor mesh_events.'
-        : 'Set NOVA_MESH_GITHUB_TOKEN or check GitHub storage adapter result.'
+        ? 'Connect Make/Zapier to this endpoint and monitor Bridge DB state.'
+        : 'Check Netlify Blobs availability and GitHub token fallback.'
     });
   } catch (error) {
     return json(500, { ok: false, error: 'ingest_failed', details: error.message });
   }
+}
+
+async function persistWithFallback(normalizedEvent) {
+  const results = [];
+
+  if (process.env.NOVA_MESH_STORAGE_MODE !== 'github_only') {
+    const blobResult = await persistEventToBlobs(normalizedEvent);
+    results.push(blobResult);
+    if (blobResult.ok) {
+      return {
+        ok: true,
+        bridge_write: 'netlify_blobs_written',
+        primary: blobResult,
+        attempts: results
+      };
+    }
+  }
+
+  if (process.env.NOVA_MESH_STORAGE_MODE !== 'blobs_only') {
+    const githubResult = await persistEventToGitHub(normalizedEvent);
+    results.push(githubResult);
+    if (githubResult.ok) {
+      return {
+        ok: true,
+        bridge_write: 'github_json_bridge_written',
+        primary: githubResult,
+        attempts: results
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    bridge_write: 'all_storage_attempts_failed',
+    attempts: results
+  };
 }
 
 function parseJson(raw) {
