@@ -1,0 +1,65 @@
+name: Nova Mesh Netlify Package Check
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'nova_mesh/implementations/netlify_ingest_package/**'
+      - '.github/workflows/nova_mesh_netlify_check.yml'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nova_mesh/implementations/netlify_ingest_package
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Inspect package
+        run: |
+          echo "Files:"
+          find . -maxdepth 4 -type f | sort
+          echo "Netlify config:"
+          cat netlify.toml
+
+      - name: Syntax check functions
+        run: |
+          node --check netlify/functions/ingest.mjs
+          node --check netlify/functions/state.mjs
+          node --check netlify/functions/heartbeat.mjs
+          node --check netlify/functions/retry-background.mjs
+          node --check netlify/functions/lib/auth.mjs
+          node --check netlify/functions/lib/blob-storage.mjs
+          node --check netlify/functions/lib/github-storage.mjs
+
+      - name: Create test payload artifact
+        run: |
+          cat > nova-mesh-test-payload.json <<'JSON'
+          {
+            "source": "github_actions",
+            "event_type": "package_check",
+            "payload": {
+              "message": "Nova Mesh Netlify package syntax check passed"
+            },
+            "priority": 2,
+            "summary_for_ai": "GitHub Actions checked the Netlify package syntax.",
+            "next_action": "Deploy to Netlify and send live ingest test.",
+            "correlation_id": "nova_mesh_netlify_check"
+          }
+          JSON
+
+      - name: Upload test payload
+        uses: actions/upload-artifact@v4
+        with:
+          name: nova-mesh-test-payload
+          path: nova_mesh/implementations/netlify_ingest_package/nova-mesh-test-payload.json
