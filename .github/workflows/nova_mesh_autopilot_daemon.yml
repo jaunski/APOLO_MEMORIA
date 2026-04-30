@@ -1,0 +1,75 @@
+name: Nova Mesh Autopilot Daemon
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/45 * * * *'
+  push:
+    paths:
+      - 'nova_mesh/data/**'
+      - 'nova_mesh/channel/**'
+      - 'nova_mesh/snapshots/**'
+      - 'scripts/nova_mesh_autopilot_daemon.js'
+      - '.github/workflows/nova_mesh_autopilot_daemon.yml'
+  issues:
+    types: [opened, edited, labeled, closed, reopened]
+  workflow_run:
+    workflows:
+      - Nova Mesh Workflow Reactor
+      - Nova Mesh Autonomy Cascade
+      - Nova Mesh Netlify Package Check
+      - Nova Mesh Netlify Deploy
+    types:
+      - completed
+
+permissions:
+  contents: write
+  issues: write
+  actions: read
+
+jobs:
+  autopilot:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Autopilot Daemon
+        id: autopilot
+        run: |
+          node scripts/nova_mesh_autopilot_daemon.js | tee autopilot-output.json
+
+      - name: Commit Autopilot changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'Nova Mesh autopilot daemon cycle'
+          file_pattern: 'nova_mesh/data/*.json nova_mesh/channel/*_autopilot_daemon_cycle.md nova_mesh/snapshots/*_autopilot_snapshot.md'
+
+      - name: Create recovery issue if needed
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let output = {};
+            try { output = JSON.parse(fs.readFileSync('autopilot-output.json', 'utf8')); } catch (e) {}
+            const decision = output.decision || {};
+            if (decision.mode === 'recovery') {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '[Nova Mesh Autopilot] Recovery route needed',
+                body: `Autopilot detected recovery mode.\n\nAction: ${decision.action}\n\nReason: ${decision.reason}\n\nNext: classify dead letters and route fallback.`,
+                labels: ['nova-mesh', 'autopilot', 'dead-letter']
+              });
+            }
+
+      - name: Summary
+        run: |
+          echo "# Nova Mesh Autopilot Daemon" >> $GITHUB_STEP_SUMMARY
+          cat autopilot-output.json >> $GITHUB_STEP_SUMMARY
