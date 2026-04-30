@@ -1,0 +1,41 @@
+name: Nova Mesh Autonomy Cascade
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '15 */6 * * *'
+  push:
+    paths:
+      - 'nova_mesh/data/**'
+      - 'scripts/nova_mesh_cascade_report.js'
+      - '.github/workflows/nova_mesh_cascade.yml'
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  cascade:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate cascade report
+        run: node scripts/nova_mesh_cascade_report.js
+
+      - name: Commit cascade report
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'Nova Mesh cascade report'
+          file_pattern: 'nova_mesh/snapshots/*_cascade_report.md'
+
+      - name: Add workflow summary
+        run: |
+          echo "# Nova Mesh Autonomy Cascade" >> $GITHUB_STEP_SUMMARY
+          echo "Generated latest cascade report under nova_mesh/snapshots/." >> $GITHUB_STEP_SUMMARY
