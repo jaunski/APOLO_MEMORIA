@@ -16,4 +16,33 @@ Default flow:
 
 Input -> capture -> normalize -> decompose -> route -> execute -> validate -> log -> store -> return -> improve.
 
-Next target: implement the first writable Bridge DB and connect Make/Zapier as external event producers.
+## Operational expansion: Agent Mesh v0
+
+Nova Mesh now moves from concept storage into small executable organs.
+
+The first operating layer should contain:
+
+- a runtime manifest
+- a heartbeat snapshot
+- small audit agents
+- topology reports
+- fallback routing notes
+- ClickUp project tracking
+- GitHub as canonical versioned memory
+- GitHub Actions as scheduled execution surface
+
+## Active execution hypothesis
+
+Nova orchestrates cognition in chat.
+ClickUp tracks work and pending projects.
+GitHub stores canonical files and scripts.
+GitHub Actions runs small recurring checks.
+Codex/Copilot-style code agents should be used for PR-level implementation and script generation when available.
+
+## First maturity target
+
+Move from exploratory cognitive architecture to operational cognitive substrate.
+
+The smallest useful system is not a super-agent. It is a mesh of tiny auditable agents that can scan, summarize, report, and preserve state.
+
+Next target: create runtime heartbeat, agent registry, mesh audit script and scheduled workflow.
