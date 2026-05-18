@@ -1,0 +1,46 @@
+name: Nova Mesh Heartbeat
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run Nova Mesh audit agent
+        run: python nova_mesh/agents/audit_agent.py
+
+      - name: Update heartbeat timestamp
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          path = Path('nova_mesh/runtime/heartbeat.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          data['last_heartbeat_utc'] = datetime.now(timezone.utc).isoformat()
+          data['state'] = 'heartbeat_workflow_ready'
+          path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit Nova Mesh report updates
+        run: |
+          git config user.name "nova-mesh-bot"
+          git config user.email "nova-mesh-bot@users.noreply.github.com"
+          git add nova_mesh/runtime/heartbeat.json nova_mesh/reports/mesh_health_report.md
+          git diff --cached --quiet || git commit -m "Update Nova Mesh heartbeat report"
+          git push
