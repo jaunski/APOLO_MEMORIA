@@ -1,0 +1,21 @@
+{
+  "runtime": "NOVA_MESH_CORE_V0",
+  "state": "bootstrapping",
+  "mesh_phase": "operational_circulation",
+  "active_layers": [
+    "chat_cognition",
+    "github_memory",
+    "clickup_coordination"
+  ],
+  "active_agents": [
+    "audit_agent",
+    "runtime_agent",
+    "topology_agent"
+  ],
+  "next_targets": [
+    "workflow_runtime",
+    "agent_registry",
+    "mesh_health_reports"
+  ],
+  "principle": "small executable organs first"
+}
