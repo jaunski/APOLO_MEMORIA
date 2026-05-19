@@ -1,6 +1,6 @@
 {
   "runtime": "NOVA_MESH_CORE_V0",
-  "state": "bootstrapping",
+  "state": "heartbeat_workflow_ready",
   "mesh_phase": "operational_circulation",
   "active_layers": [
     "chat_cognition",
@@ -17,5 +17,6 @@
     "agent_registry",
     "mesh_health_reports"
   ],
-  "principle": "small executable organs first"
+  "principle": "small executable organs first",
+  "last_heartbeat_utc": "2026-05-19T15:48:42.658506+00:00"
 }
