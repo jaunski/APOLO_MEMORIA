@@ -1,8 +1,8 @@
 # Nova Mesh Health Report
 
-- generated_at: 2026-05-19T15:48:42.611816 UTC
+- generated_at: 2026-05-19T20:03:53.334075 UTC
 - runtime: NOVA_MESH_CORE_V0
-- state: bootstrapping
+- state: heartbeat_workflow_ready
 
 ## Active Layers
 - chat_cognition
