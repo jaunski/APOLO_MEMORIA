@@ -1,0 +1,3 @@
+Adalo timeout -> retry smaller payload
+ClickUp blocked -> read then minimal write
+Manus 401 -> reroute to GitHub
