@@ -1,0 +1,9 @@
+tool_router_v1
+root: github
+if github_file_ok -> persist state
+if github_issue_blocked -> use file capsule
+if adalo_building -> wait cockpit then sync status
+if clickup_write_blocked -> read probe then minimal write
+if drive_partial -> mirror compact checkpoint
+if manus_401 -> offline reroute
+unlocks: external_sync
