@@ -1,21 +1,5 @@
 [
   {
-    "event_id": "evt_boot_pointer_confirmed_20260430",
-    "timestamp": "2026-04-30T00:00:00-03:00",
-    "source": "chatgpt.current_session",
-    "event_type": "boot_pointer_confirmed",
-    "payload": {
-      "boot_pointer": "nova_mesh/BOOT_POINTER.md",
-      "shared_context_path": "jaunski/APOLO_MEMORIA/nova_mesh/"
-    },
-    "status": "done",
-    "priority": 1,
-    "summary_for_ai": "O ponteiro de boot da Nova Mesh foi criado e confirmado como caminho de continuidade entre chats.",
-    "next_action": "Criar Banco Ponte minimo em GitHub JSON e continuar preparando ingestao externa.",
-    "route_hint": "github.memory",
-    "correlation_id": "nova_mesh_bootstrap"
-  },
-  {
     "event_id": "evt_autopilot_1777581131865",
     "timestamp": "2026-04-30T20:32:11.865Z",
     "source": "github.autopilot_daemon",
@@ -8982,6 +8966,24 @@
   {
     "event_id": "evt_autopilot_1780315741544",
     "timestamp": "2026-06-01T12:09:01.544Z",
+    "source": "github.autopilot_daemon",
+    "event_type": "autopilot_cycle_completed",
+    "payload": {
+      "mode": "build",
+      "priority": 1,
+      "action": "Advance Netlify Ingest deploy/test chain.",
+      "reason": "Open deploy/ingest task: task_ingest_endpoint_20260430"
+    },
+    "status": "done",
+    "priority": 1,
+    "summary_for_ai": "Autopilot daemon classified mesh mode as build.",
+    "next_action": "Advance Netlify Ingest deploy/test chain.",
+    "route_hint": "autopilot.daemon",
+    "correlation_id": "nova_mesh_autopilot"
+  },
+  {
+    "event_id": "evt_autopilot_1780319838717",
+    "timestamp": "2026-06-01T13:17:18.717Z",
     "source": "github.autopilot_daemon",
     "event_type": "autopilot_cycle_completed",
     "payload": {
