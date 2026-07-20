@@ -1,23 +1,5 @@
 [
   {
-    "event_id": "evt_autopilot_1781654624677",
-    "timestamp": "2026-06-17T00:03:44.677Z",
-    "source": "github.autopilot_daemon",
-    "event_type": "autopilot_cycle_completed",
-    "payload": {
-      "mode": "build",
-      "priority": 1,
-      "action": "Advance Netlify Ingest deploy/test chain.",
-      "reason": "Open deploy/ingest task: task_ingest_endpoint_20260430"
-    },
-    "status": "done",
-    "priority": 1,
-    "summary_for_ai": "Autopilot daemon classified mesh mode as build.",
-    "next_action": "Advance Netlify Ingest deploy/test chain.",
-    "route_hint": "autopilot.daemon",
-    "correlation_id": "nova_mesh_autopilot"
-  },
-  {
     "event_id": "evt_autopilot_1781673369067",
     "timestamp": "2026-06-17T05:16:09.067Z",
     "source": "github.autopilot_daemon",
@@ -8984,6 +8966,24 @@
   {
     "event_id": "evt_autopilot_1784509999975",
     "timestamp": "2026-07-20T01:13:19.975Z",
+    "source": "github.autopilot_daemon",
+    "event_type": "autopilot_cycle_completed",
+    "payload": {
+      "mode": "build",
+      "priority": 1,
+      "action": "Advance Netlify Ingest deploy/test chain.",
+      "reason": "Open deploy/ingest task: task_ingest_endpoint_20260430"
+    },
+    "status": "done",
+    "priority": 1,
+    "summary_for_ai": "Autopilot daemon classified mesh mode as build.",
+    "next_action": "Advance Netlify Ingest deploy/test chain.",
+    "route_hint": "autopilot.daemon",
+    "correlation_id": "nova_mesh_autopilot"
+  },
+  {
+    "event_id": "evt_autopilot_1784520211268",
+    "timestamp": "2026-07-20T04:03:31.268Z",
     "source": "github.autopilot_daemon",
     "event_type": "autopilot_cycle_completed",
     "payload": {
